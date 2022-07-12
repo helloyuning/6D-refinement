@@ -4,7 +4,9 @@
 ############################################
 Data set reading part:
 
-This function get camera infomation
+This function get camera infomation:
+
+
 def load_info(path):
     with open(path, 'rb') as f:
         info = yaml.safe_load(f)
@@ -17,7 +19,8 @@ def load_info(path):
                 info[eid]['cam_t_w2c'] = np.array(info[eid]['cam_t_w2c']).reshape((3, 1))
     return info
 
-Load groundtrulth infomation
+Load groundtrulth infomation:
+
 def load_gt(path):
     with open(path, 'rb') as f:
         gts = yaml.safe_load(f)
