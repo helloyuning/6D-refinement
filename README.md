@@ -5,7 +5,7 @@
 Data set reading part:
 
 This function get camera infomation:
-
+return: camera information
 
 def load_info(path):
     with open(path, 'rb') as f:
@@ -21,6 +21,7 @@ def load_info(path):
 
 Load groundtrulth infomation:
 
+load_gt return gt pose
 def load_gt(path):
     with open(path, 'rb') as f:
         gts = yaml.safe_load(f)
@@ -51,7 +52,7 @@ class Benchmark:
         self.models = {}
        
 
-
+load_sixd function return Benchmark class stored data
 def load_sixd(base_path, seq, nr_frames=0, load_mesh=True, subset_models=[]):
 
     bench = Benchmark()
