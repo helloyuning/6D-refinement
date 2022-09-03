@@ -1,3 +1,19 @@
+print information
+
+origional_pose - run test_customModel.py get gt_pose and print after converting rotation matrix to quaternion
+pertur_r, pertur_t - run test_customModel.py get perturbedPose and print after converting rotation matrix to quaternion
+
+
+
+
+
+
+
+
+
+
+
+
 # 6D-refinement
 #The batch_train file in main folder uploaded(recent uploaded on 2022.06.03)
 #oneBatch_train.py file uploaded on 2022.7.8
