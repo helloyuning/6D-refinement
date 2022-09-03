@@ -64,10 +64,14 @@ with tf.Session() as session:
         col = frame.color.copy()
         # _, gt_pose, _ = frame.gt[0]
         _, gt_pose = frame.gt[0]  # corrected
+        gt_t = gt_pose[:3, 3]
+        gt_r = matrix2quaternion(gt_pose[:3, :3])
+
+        print("origional_pose:", gt_r, gt_t)
         # print(frame.gt[0])
 
         perturbed_pose = perturb_pose(gt_pose, max_rot_pert, max_trans_pert)
-
+        print("pertur_r:", matrix2quaternion(perturbed_pose[:3, :3]), "pertur_t:", perturbed_pose[:3, 3])
         refinable = Refinable(model=bench.models[str(int(obj))], label=0, hypo_pose=perturbed_pose,
                               metric_crop_shape=croppings['linemod']['obj_{:02d}'.format(int(obj))], input_col=col)
         print("iterations:", iterations)
