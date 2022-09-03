@@ -6,10 +6,10 @@ from utils.quaternion import matrix2quaternion
 from pyquaternion import Quaternion
 from utils.quaternion import matrix2quaternion
 from rendering.utils import trans_rot_err
-
+from op_refine import refine_process
 
 class Refinable(object):
-    def __init__(self, model, label, metric_crop_shape, input_col=None, hypo_pose=np.identity(4)):
+    def __init__(self, model, label, metric_crop_shape, delta_r=None, delta_t=None, input_col=None, hypo_pose=np.identity(4)):
         self.metric_crop_shape = metric_crop_shape
         self.label = label
         self.model = model
@@ -17,6 +17,8 @@ class Refinable(object):
         self.hypo_pose = hypo_pose
         self.bbox = None
         self.hypo_dep = None
+        self.delta_r = delta_r
+        self.delta_t = delta_t
 
 
 
@@ -33,23 +35,35 @@ class Refiner(object):
         assert refinable is not None
 
         last_pose = np.copy(refinable.hypo_pose)
-        for i in range(max_iterations):
 
+        k = 0
+        for i in range(max_iterations):
+            k = k + 1
             refinable = self.refine(refinable=refinable)
+
 
             last_trans = last_pose[:3, 3]
             last_rot = Quaternion(matrix2quaternion(last_pose[:3, :3]))
 
-            cur_trans = refinable.hypo_pose[:3, 3]
-            cur_rot = Quaternion(matrix2quaternion(refinable.hypo_pose[:3, :3]))
-            # print("last_pose:", last_pose)
-            # print("current_trans:", cur_trans, "last_trans", last_trans)
-            # print("cur_trans - last_trans",cur_trans - last_trans)
+
+            hypo_pose = refine_process(matrix2quaternion(refinable.hypo_pose[:3, :3]),
+                                       np.expand_dims(matrix2quaternion(last_pose[:3, :3]),axis=0), refinable.hypo_pose[:3, 3], last_trans)
+            cur_trans = hypo_pose[:3, 3]
+            cur_rot = Quaternion(matrix2quaternion(hypo_pose[:3, :3]))
+            #print("计算成功",hypo_pose)
+
+            #原来的代码
+            # cur_trans = refinable.hypo_pose[:3, 3]
+            # cur_rot = Quaternion(matrix2quaternion(refinable.hypo_pose[:3, :3]))
+            #print("quaternion_r:",Quaternion(matrix2quaternion(refinable.hypo_pose[:3, :3])))
+
+
             trans_diff = np.linalg.norm(cur_trans - last_trans)
             update_q = cur_rot * last_rot.inverse
             angular_diff = np.abs((update_q).degrees)
 
-            last_pose = np.copy(refinable.hypo_pose)
+
+            last_pose = np.copy(hypo_pose)#原来为refinable.hypo_pose
             #print("trans_diff:", round(trans_diff, 6), "angular_diff:", round(angular_diff, 6))
 
             if display:
@@ -58,15 +72,17 @@ class Refiner(object):
                 cv2.waitKey(500)
 
             if angular_diff <= min_rotation_displacement and trans_diff <= min_translation_displacement:
-                #print("优化")
+                print("refinement over, iteration:", k)
                 refinable.iterations = i+1
                 return refinable
 
         refinable.iterations = max_iterations
+
+
         return refinable
 
     def refine(self, refinable):
-
+        i = 1
         refinable.refined = False
         self.ren.clear()
         self.ren.draw_model(refinable.model, refinable.hypo_pose, ambient=0.5, specular=0, shininess=100,
@@ -120,24 +136,25 @@ class Refiner(object):
         }
 
         # run network
+        #delta_rotation, delta_translation = self.session
         refined_rotation, refined_translation = self.session.run([self.architecture.rotation_hy_to_gt,
                                                                   self.architecture.translation_hy_to_gt],
                                                                  feed_dict=feed_dict)
 
+
+
         assert np.sum(np.isnan(refined_translation[0])) == 0 and np.sum(np.isnan(refined_rotation[0])) == 0
 
 
-        #print("rotation:",refined_rotation)
+        print("r:",refined_rotation, "t:", refined_translation)
         # print("trans:",refined_translation)
         refined_pose = np.identity(4)
         refined_pose[:3, :3] = Quaternion(refined_rotation[0]).rotation_matrix
         refined_pose[:3, 3] = refined_translation[0]
-        # print("Quaternion(refined_rotation[0]):", Quaternion(refined_rotation[0]))
-        # print("Quaternion(refined_rotation[0]).rotation_matrix:", Quaternion(refined_rotation[0]).rotation_matrix)
-        # print("refine_pose:",refined_pose)]
-        #print(refinable.hypo_pose, refined_pose)
-        refinable.hypo_pose = refined_pose
 
+        refinable.hypo_pose = refined_pose
+        refinable.delta_r = refined_rotation #我加的
+        refinable.delta_t = refined_translation #我加的
         refinable.render_patch = render_path.copy()
         refinable.refined = True
 
