@@ -222,6 +222,8 @@ def perturb_pose(pose, rot_variation, trans_variation):
     hy_pose = np.identity(4)
     hy_pose[:3, :3] = np.dot(perturb_quat.rotation_matrix, pose[:3, :3])
     hy_pose[:3, 3] = pose[:3, 3] + perturb_tra
+    # print("pertub_q", perturb_quat)
+    # print("perturb_t", perturb_tra)
 
     return hy_pose
 
