@@ -1,9 +1,13 @@
 print information
 
-origional_pose - run test_customModel.py get gt_pose and print after converting rotation matrix to quaternion
+origional_pose - run test_customModel.py get gt_pose and print after converting rotation matrix to quaternion 
+
 perturb_q, perturb_t - run rendering/utils.py get perturbation matrix and it will be added to input pose
+
 pertur_r, pertur_t - run test_customModel.py get perturbedPose and print after converting rotation matrix to quaternion
+
 delta_r, delat_t - run refiner/refiner.py it's the result from model(from refine mathod)
+
 refined_pose - run refiner/refiner.py print laste pose after calculate pose error(iterative_contour_alignment method)
 
 
